@@ -5,6 +5,7 @@ on:
         branches: [main] # Change to your default branch if needed
     pull_request:
         branches: [main] # Optional: Run on PRs for validation
+    workflow_dispatch:
 
 env:
     REGISTRY: ghcr.io/zahlenhelfer/${{ github.repository }}
