@@ -11,47 +11,84 @@ on:
     workflow_dispatch:
 
 jobs:
-    publish-hello-world-image:
+    build-and-push:
         runs-on: ubuntu-latest
+        permissions:
+            contents: read # Required to checkout the repository code
+            packages: write # Required to publish packages to GHCR
 
         steps:
-            # - name: Login to GitHub Container Registry
-            #   uses: docker/login-action@v2
-            #   with:
-            #       registry: ghcr.io
-            #       username: ${{ github.actor }}
-            #       password: ${{ secrets.GITHUB_TOKEN }}
+            - name: Checkout repository
+              uses: actions/checkout@v4
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v3
 
-            - name: Build and push
-              uses: docker/build-push-action@v6
+            - name: Log in to GitHub Container Registry
+              uses: docker/login-action@v3
               with:
-                  context: .
-                  file: Dockerfile
-                  platforms: linux/amd64 #,linux/arm64,linux/arm/v7
-                  push: true
-                  tags: zahlenhelfer/kuard:1
+                  registry: ghcr.io
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+              # The GITHUB_TOKEN secret is automatically created by GitHub Actions for each workflow run and has
+              # permissions to publish packages associated with the workflow repository.
 
-            # - name: Docker metadata
-            #   id: meta
-            #   uses: docker/metadata-action@v4
-            #   with:
-            #       images: ghcr.io/zahlenhelfer/kuard
-            #       flavor: latest=true
-            #       tags: |
-            #           type=ref,event=branch
-            #           type=ref,event=pr
-            #           type=semver,pattern={{version}}
+            - name: Define image tag for GHCR
+              id: set_tag
+              run: |
+                  # Use the repository name from the GitHub context to form the GHCR image name.
+                  # For example, if your repo is 'my-org/my-app', the image will be 'ghcr.io/my-org/my-app:1'.
+                  IMAGE_NAME="ghcr.io/${{ github.repository }}:1"
+                  echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_OUTPUT
 
-            # - name: Build and push
-            #   uses: docker/build-push-action@v3
-            #   with:
-            #       context: .
-            #       file: Dockerfile
-            #       platforms: linux/amd64,linux/arm64,linux/arm/v7
-            #       push: true
-            #       #push: ${{ github.ref_type == 'tag' }}
-            #       tags: ${{ steps.meta.outputs.tags }}
-            #       labels: ${{ steps.meta.outputs.labels }}
+            - name: Build and push Docker image
+              run: |
+                  docker build . \
+                    -t ${{ steps.set_tag.outputs.IMAGE_NAME }} \
+                    -f Dockerfile \
+                    --platform linux/amd64
+                  docker push ${{ steps.set_tag.outputs.IMAGE_NAME }}
+              # The `--platform linux/amd64` is added to match the single platform specified in your original workflow.
+              # If multi-platform builds are desired, you would typically use `docker buildx build --platform ...`
+              # with the appropriate setup.
+
+              # - name: Login to GitHub Container Registry
+              #   uses: docker/login-action@v2
+              #   with:
+              #       registry: ghcr.io
+              #       username: ${{ github.actor }}
+              #       password: ${{ secrets.GITHUB_TOKEN }}
+
+              # - name: Set up Docker Buildx
+              #   uses: docker/setup-buildx-action@v3
+
+              # - name: Build and push
+              #   uses: docker/build-push-action@v6
+              #   with:
+              #       context: .
+              #       file: Dockerfile
+              #       platforms: linux/amd64 #,linux/arm64,linux/arm/v7
+              #       push: true
+              #       tags: zahlenhelfer/kuard:1
+
+              # - name: Docker metadata
+              #   id: meta
+              #   uses: docker/metadata-action@v4
+              #   with:
+              #       images: ghcr.io/zahlenhelfer/kuard
+              #       flavor: latest=true
+              #       tags: |
+              #           type=ref,event=branch
+              #           type=ref,event=pr
+              #           type=semver,pattern={{version}}
+
+              # - name: Build and push
+              #   uses: docker/build-push-action@v3
+              #   with:
+              #       context: .
+              #       file: Dockerfile
+              #       platforms: linux/amd64,linux/arm64,linux/arm/v7
+              #       push: true
+              #       #push: ${{ github.ref_type == 'tag' }}
+              #       tags: ${{ steps.meta.outputs.tags }}
+              #       labels: ${{ steps.meta.outputs.labels }}
