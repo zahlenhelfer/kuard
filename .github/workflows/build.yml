@@ -33,18 +33,32 @@ jobs:
               # The GITHUB_TOKEN secret is automatically created by GitHub Actions for each workflow run and has
               # permissions to publish packages associated with the workflow repository.
 
-            - name: Define image tag for GHCR
-              id: set_tag
+            - name: Define image tags for GHCR
+              id: set_tags
               run: |
-                  # Use the repository name from the GitHub context to form the GHCR image name.
-                  # For example, if your repo is 'my-org/my-app', the image will be 'ghcr.io/my-org/my-app:1'.
-                  IMAGE_NAME="ghcr.io/${{ github.repository }}:1"
-                  echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_OUTPUT
+                  # The base part of the image name (e.g., ghcr.io/your-org/your-repo)
+                  REPO_IMAGE_BASE="ghcr.io/${{ github.repository }}"
 
-            - name: Build and push Docker image (Multi-Platform)
+                  # Define the specific tags you want to apply
+                  # '1' is the version tag, 'blue' is an example, 'latest' is common.
+                  # You can add or remove tags from this list.
+                  ALL_TAGS="1 2 blue green latest" # Space-separated list of desired tags
+
+                  # Construct the '--tag' arguments string
+                  TAG_ARGS=""
+                  for TAG in ${ALL_TAGS}; do
+                      TAG_ARGS+=" --tag ${REPO_IMAGE_BASE}:${TAG}"
+                  done
+
+                  # Output the constructed tag arguments to be used in the next step
+                  echo "TAG_ARGS=${TAG_ARGS}" >> $GITHUB_OUTPUT
+                  # Example output for TAG_ARGS:
+                  # "--tag ghcr.io/owner/repo:1 --tag ghcr.io/owner/repo:blue --tag ghcr.io/owner/repo:latest"
+
+            - name: Build and push Docker image (Multi-Platform, Multiple Tags)
               run: |
-                  docker buildx build . \
+                  docker build . \
                       --file Dockerfile \
-                      --platform linux/amd64,linux/arm64,linux/arm/v7 \
-                      --tag ${{ steps.set_tag.outputs.IMAGE_NAME }} \
+                      --platform linux/amd64 \
+                      ${{ steps.set_tags.outputs.TAG_ARGS }} \
                       --push
