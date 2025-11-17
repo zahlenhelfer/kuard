@@ -17,11 +17,8 @@ jobs:
         steps:
             - uses: actions/checkout@v3
 
-            - name: Requirements Installation
-              run: npm update caniuse-lite browserslist
-
             - name: Build the Binary via Makefile
-              run: make
+              run: make all
 
             # - name: Login to GitHub Container Registry
             #   uses: docker/login-action@v2
