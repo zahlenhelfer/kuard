@@ -27,17 +27,17 @@ jobs:
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v2
 
-            - name: Build the Binary via Makefile
-              run: docker build -t kuard-amd64:blue .
+            # - name: Build the Binary via Makefile
+            #   run: docker build -t kuard-amd64:blue .
 
             - name: Build and push
-              uses: docker/build-push-action@v3
+              uses: docker/build-push-action@v6
               with:
                   context: .
                   file: Dockerfile
                   platforms: linux/amd64,linux/arm64,linux/arm/v7
                   push: true
-                  tags: "ghcr.io/zahlenhelfer/kuard:1"
+                  tags: zahlenhelfer/kuard:1
 
             # - name: Docker metadata
             #   id: meta
