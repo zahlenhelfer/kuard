@@ -17,6 +17,9 @@ jobs:
         steps:
             - uses: actions/checkout@v3
 
+            - name: Requirements Installation
+              run: npm update caniuse-lite browserslist
+
             - name: Build the Binary via Makefile
               run: make
 
