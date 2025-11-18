@@ -55,7 +55,7 @@ jobs:
                   # Example output for TAG_ARGS:
                   # "--tag ghcr.io/owner/repo:1 --tag ghcr.io/owner/repo:blue --tag ghcr.io/owner/repo:latest"
 
-            - name: Build and push Docker image (Multi-Platform, Multiple Tags)
+            - name: Build and push Docker image ( with Multiple Tags)
               run: |
                   docker build . \
                       --file Dockerfile \
